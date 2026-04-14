@@ -1,4 +1,4 @@
-# hashtag
+# hashtagaja
 
 temporary chat rooms. type a hashtag, get a room, everything deletes after 7 days.
 

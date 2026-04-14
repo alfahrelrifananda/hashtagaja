@@ -4,7 +4,7 @@ const id = {
   logo: '#',
 
   home: {
-    title: '#hashtag',
+    title: '#hashtagaja',
     desc: ['ketik hashtag.', 'dapat ruangan.', 'hilang dalam 7 hari.'],
     featuresTitle: 'cara kerja',
     inputPlaceholder: '#ruangan-kamu',
@@ -128,7 +128,7 @@ const en: typeof id = {
   logo: '#',
 
   home: {
-    title: '#hashtag',
+    title: '#hashtagaja',
     desc: ['type a hashtag.', 'get a room.', 'gone in 7 days.'],
     featuresTitle: 'how it works',
     inputPlaceholder: '#your-room',
