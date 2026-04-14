@@ -17,7 +17,7 @@ export function Home() {
   const [focused, setFocused] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
 
-  useTitle('hashtag')
+  useTitle('hashtagaja')
 
   const inputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()

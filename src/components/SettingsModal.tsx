@@ -95,7 +95,7 @@ export function SettingsModal({ onClose }: Props) {
             <div className={styles.infoRow}>
               <span className={styles.infoLabel}>{c.sourceCode}</span>
               <a href="https://github.com/alfahrelrifananda/hashtagaja" target="_blank" rel="noopener noreferrer" className={styles.infoLink}>
-                github.com/alfahrelrifananda/hashtag
+                github.com/alfahrelrifananda/hashtagaja
               </a>
             </div>
             <div className={styles.infoRow}>

@@ -60,7 +60,7 @@ export function AdminDashboard() {
   const [confirmDelete, setConfirmDelete] = useState<{ type: 'room' | 'message' | 'rooms' | 'messages'; ids: string[]; label: string } | null>(null)
   const [deleting, setDeleting] = useState(false)
 
-  useTitle(selectedRoom ? `#${selectedRoom.hashtag} — admin` : 'admin — hashtag')
+  useTitle(selectedRoom ? `#${selectedRoom.hashtag} — admin` : 'admin — hashtagaja')
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 3000) }
 

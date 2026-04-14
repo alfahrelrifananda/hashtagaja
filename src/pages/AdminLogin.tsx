@@ -13,7 +13,7 @@ export function AdminLogin() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  useTitle('admin — hashtag')
+  useTitle('admin — hashtagaja')
   const navigate = useNavigate()
 
   async function handleLogin(e: React.FormEvent) {

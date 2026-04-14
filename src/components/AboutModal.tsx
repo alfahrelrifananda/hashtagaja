@@ -35,7 +35,7 @@ export function AboutModal({ onClose }: Props) {
             <p className={styles['about-label']}>kode sumber</p>
             <p className={styles['about-value']}>
               <a href="https://github.com/alfahrelrifananda/hashtagaja" target="_blank" rel="noopener noreferrer" className={styles['about-link']}>
-                github.com/alfahrelrifananda/hashtag
+                github.com/alfahrelrifananda/hashtagaja
               </a>
             </p>
           </div>

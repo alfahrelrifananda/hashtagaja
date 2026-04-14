@@ -43,7 +43,7 @@ export function Room() {
   const { settings } = useSettings()
   const c = getContent(settings.language).room
 
-  useTitle(hashtag ? `#${hashtag} — hashtag` : 'hashtag')
+  useTitle(hashtag ? `#${hashtag} — hashtagaja` : 'hashtagaja')
   const navigate = useNavigate()
 
   useEffect(() => {
