@@ -1,0 +1,18 @@
+.theme-toggle {
+  font-family: var(--font);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  letter-spacing: 0.03em;
+  transition: color var(--transition), background var(--transition), border-color var(--transition);
+  white-space: nowrap;
+}
+
+.theme-toggle:hover {
+  color: var(--text);
+  background: var(--bg-tertiary);
+  border-color: var(--border-strong);
+}
