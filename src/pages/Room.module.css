@@ -159,6 +159,19 @@
   flex-direction: column;
   gap: 0;
 }
+
+.read-more {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  font-style: italic;
+  transition: color var(--transition);
+  user-select: none;
+}
+.read-more:hover {
+  color: var(--text);
+}
+
 .room-empty {
   flex: 1;
   display: flex;

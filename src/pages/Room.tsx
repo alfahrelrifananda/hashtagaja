@@ -10,9 +10,26 @@ import { getContent } from '../lib/content'
 import type { Message, Room as RoomType } from '../types'
 import styles from './Room.module.css'
 
+const LINE_LIMIT = 5
+const CHAR_LIMIT = 400
+
+
+function isLong(text: string) {
+  const lines = text.split('\n')
+  return lines.length > LINE_LIMIT || text.length > CHAR_LIMIT
+}
+
+function truncate(text: string) {
+  const lines = text.split('\n')
+  if (lines.length > LINE_LIMIT) return lines.slice(0, LINE_LIMIT).join('\n')
+  return text.slice(0, CHAR_LIMIT)
+}
+
 function formatTime(dateStr: string) {
   return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
 }
+
+
 function formatExpiry(dateStr: string) {
   const diff = new Date(dateStr).getTime() - Date.now()
   if (diff <= 0) return null // expired
@@ -82,6 +99,16 @@ export function Room() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
+  
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
+
+  function toggleExpand(id: string) {
+    setExpandedIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -538,11 +565,28 @@ export function Room() {
                       /* ── Bubble Normal ── */
                       <div className={`${styles['msg-bubble-wrap']} ${isSelf ? styles.self : styles.other}`}>
                         <div className={`${styles['msg-bubble']} ${styles['text-bubble']} ${isSelf ? styles.self : styles.other}`}>
-                          {renderMessageContent(msg.content)}
-                          {(msg as any).edited_at && (
-                            <span className={styles['edited-label']}>diedit</span>
-                          )}
-                          <span className={styles['msg-time-inline']}>{formatTime(msg.created_at)}</span>
+                          {(() => {
+                            const long = isLong(msg.content)
+                            const expanded = expandedIds.has(msg.id)
+                            const displayed = long && !expanded ? truncate(msg.content) : msg.content
+                            return (
+                              <>
+                                {renderMessageContent(displayed)}
+                                {long && (
+                                  <span
+                                    className={styles['read-more']}
+                                    onClick={() => toggleExpand(msg.id)}
+                                  >
+                                    {expanded ? ' sembunyikan' : ' ...selengkapnya'}
+                                  </span>
+                                )}
+                                {(msg as any).edited_at && (
+                                  <span className={styles['edited-label']}>diedit</span>
+                                )}
+                                <span className={styles['msg-time-inline']}>{formatTime(msg.created_at)}</span>
+                              </>
+                            )
+                          })()}
                         </div>
 
                         {/* Tombol aksi — hanya untuk pesan sendiri */}
@@ -572,7 +616,6 @@ export function Room() {
                             )}
                           </div>
                         ) : (
-                          /* Tombol salin saja untuk pesan orang lain */
                           <button
                             className={styles['copy-btn']}
                             onClick={() => copyMessage(msg.id, msg.content)}
