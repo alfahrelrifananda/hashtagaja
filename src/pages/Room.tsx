@@ -9,7 +9,6 @@ import { useTitle } from '../hooks/useTitle'
 import { getContent } from '../lib/content'
 import type { Message, Room as RoomType } from '../types'
 import styles from './Room.module.css'
-import { AdBanner } from '../lib/AdBanner'
 
 function formatTime(dateStr: string) {
   return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
