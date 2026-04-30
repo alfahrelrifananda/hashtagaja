@@ -1,10 +1,40 @@
+.room-layout {
+  display: grid;
+  grid-template-columns: 1fr 50vw 1fr;
+  min-height: 100dvh;
+}
+
+.ad-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  justify-content: center;
+}
+
+.ad-sidebar img {
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 1000px) {
+  .room-layout {
+    grid-template-columns: 1fr;
+  }
+  .ad-sidebar { display: none; }
+}
+
 .room {
   display: flex;
   flex-direction: column;
   height: 100dvh;
   overflow: hidden;
   position: relative;
-  width: 75vw;
+  width: 50vw;
   margin: 0 auto;
 }
 
@@ -53,7 +83,6 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 20px;
-  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   background: var(--bg);
   position: sticky;
@@ -300,7 +329,6 @@
 
 /* Footer / input */
 .room-footer {
-  border-top: 1px solid var(--border);
   padding: 12px 20px 10px;
   background: var(--bg);
   flex-shrink: 0;
@@ -373,7 +401,7 @@
   letter-spacing: 0.01em;
 }
 
-/* Copy button */
+/* ── Bubble wrap (text messages) ── */
 .msg-bubble-wrap {
   display: flex;
   flex-direction: column;
@@ -383,6 +411,7 @@
 .msg-bubble-wrap.self { align-items: flex-end; }
 .msg-bubble-wrap.other { align-items: flex-start; }
 
+/* Copy button (pesan orang lain) */
 .copy-btn {
   font-family: var(--font);
   font-size: 0.6875rem;
@@ -397,6 +426,99 @@
 }
 .msg-bubble-wrap:hover .copy-btn { opacity: 1; pointer-events: auto; }
 .copy-btn:hover { color: var(--text); background: var(--bg-tertiary); border-color: var(--border-strong); }
+
+/* ── Action buttons row (edit, hapus, salin) — pesan sendiri ── */
+.msg-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition);
+}
+.msg-bubble-wrap:hover .msg-actions { opacity: 1; pointer-events: auto; }
+
+.action-edit-btn,
+.action-delete-btn,
+.action-cancel-btn {
+  font-family: var(--font);
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  letter-spacing: 0.02em;
+  transition: color var(--transition), background var(--transition), border-color var(--transition);
+}
+.action-edit-btn:hover   { color: var(--text); background: var(--bg-tertiary); border-color: var(--border-strong); }
+.action-delete-btn       { color: var(--danger); border-color: var(--danger); opacity: 0.7; }
+.action-delete-btn:hover { opacity: 1; }
+.action-cancel-btn:hover { color: var(--text); border-color: var(--border-strong); }
+
+.delete-confirm-label { font-size: 0.6875rem; color: var(--danger); }
+.action-delete-confirm-btn {
+  font-family: var(--font);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: #fff;
+  background: var(--danger);
+  padding: 2px 8px;
+  border-radius: var(--radius);
+  transition: opacity var(--transition);
+}
+.action-delete-confirm-btn:hover { opacity: 0.8; }
+
+/* ── Label "diedit" ── */
+.edited-label {
+  font-size: 0.625rem;
+  color: var(--text-muted);
+  margin-left: 6px;
+  font-style: italic;
+  opacity: 0.7;
+}
+
+/* ── Mode edit inline ── */
+.edit-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: min(80%, 50vw);
+}
+.edit-textarea {
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  padding: 9px 14px;
+  border-radius: var(--radius);
+  border: 1.5px solid var(--border-strong);
+  background: var(--bg-secondary);
+  color: var(--text);
+  resize: none;
+  min-height: 60px;
+  font-family: var(--font);
+}
+.edit-textarea:focus { outline: none; border-color: var(--text); }
+.edit-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.edit-save-btn {
+  font-family: var(--font);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--bg);
+  background: var(--text);
+  padding: 4px 10px;
+  border-radius: var(--radius);
+  transition: opacity var(--transition);
+}
+.edit-save-btn:hover { opacity: 0.8; }
+.edit-cancel-btn {
+  font-family: var(--font);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: all var(--transition);
+}
+.edit-cancel-btn:hover { color: var(--text); border-color: var(--border-strong); }
 
 /* File bubble time */
 .file-bubble-right {
@@ -525,6 +647,7 @@
   .room-hashtag { font-size: 0.88rem; }
   .room-meta { font-size: 0.68rem; gap: 4px; }
   .delete-room-btn { font-size: 0.68rem; padding: 4px 7px; }
+  .edit-wrap { max-width: 85vw; }
 }
 
 @media (max-width: 420px) {

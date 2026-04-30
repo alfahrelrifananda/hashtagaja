@@ -9,6 +9,7 @@ import { useTitle } from '../hooks/useTitle'
 import { getContent } from '../lib/content'
 import type { Message, Room as RoomType } from '../types'
 import styles from './Room.module.css'
+import { AdBanner } from '../lib/AdBanner'
 
 function formatTime(dateStr: string) {
   return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
@@ -73,6 +74,11 @@ export function Room() {
   const [confirmDeleteRoom, setConfirmDeleteRoom] = useState(false)
   const [deletingRoom, setDeletingRoom] = useState(false)
 
+  // ── Edit & Delete state ──
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editText, setEditText] = useState('')
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -116,18 +122,33 @@ export function Room() {
         setMessages(prev => [...prev, payload.new as Message])
         setTimeout(scrollToBottom, 50)
       })
+      // Message updated (edit)
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'messages',
+        filter: `room_id=eq.${room.id}`
+      }, (payload) => {
+        setMessages(prev => prev.map(m =>
+          m.id === payload.new.id ? { ...m, ...payload.new as Message } : m
+        ))
+      })
+      // Message deleted
+      .on('postgres_changes', {
+        event: 'DELETE', schema: 'public', table: 'messages',
+        filter: `room_id=eq.${room.id}`
+      }, (payload) => {
+        setMessages(prev => prev.filter(m => m.id !== payload.old.id))
+      })
       // Room deleted — redirect guests
       .on('postgres_changes', {
         event: 'DELETE', schema: 'public', table: 'rooms'
       }, () => {
         setRoomDeleted(true)
       })
-      // Presence — track online members + owner status
+      // Presence — track online members
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState<{ user_id: string }>()
         const onlineUsers = Object.values(state).flat().map(p => p.user_id)
         setMemberCount(onlineUsers.length)
-
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
@@ -165,14 +186,11 @@ export function Room() {
     cleanup()
   }, [roomExpired, isCreator, room])
 
-
-
   async function initRoom() {
     setLoading(true)
     try {
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
 
-      // Check if room already exists
       const { data: existingRoom } = await supabase
         .from('rooms')
         .select('*')
@@ -181,7 +199,6 @@ export function Room() {
         .single()
 
       if (!existingRoom) {
-        // Room doesn't exist — check room creation limit (max 3 per hour)
         const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
         const { count } = await supabase
           .from('rooms')
@@ -195,7 +212,6 @@ export function Room() {
           return
         }
 
-        // Create the room with creator_id
         const { error: upsertError } = await supabase
           .from('rooms')
           .upsert(
@@ -204,14 +220,12 @@ export function Room() {
           )
         if (upsertError) throw upsertError
       } else if (!existingRoom.creator_id) {
-        // Room exists but has no owner — claim it
         await supabase
           .from('rooms')
           .update({ creator_id: userId })
           .eq('id', existingRoom.id)
       }
 
-      // Fetch the room
       const { data: fetchedRoom, error: fetchError } = await supabase
         .from('rooms')
         .select('*')
@@ -251,11 +265,57 @@ export function Room() {
     finally { setSending(false); setTimeout(() => textareaRef.current?.focus(), 0) }
   }
 
+  // ── Edit handlers ──
+  function startEdit(msg: Message) {
+    setEditingId(msg.id)
+    setEditText(msg.content)
+    setDeletingId(null)
+  }
+
+  async function saveEdit(msgId: string) {
+    const text = editText.trim()
+    if (!text) return
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .update({ content: text, edited_at: new Date().toISOString() })
+        .eq('id', msgId)
+        .eq('sender_id', userId)
+      if (error) throw error
+      setMessages(prev => prev.map(m =>
+        m.id === msgId ? { ...m, content: text, edited_at: new Date().toISOString() } : m
+      ))
+    } catch (err) {
+      setError(c.errors.sendFailed)
+      console.error(err)
+    } finally {
+      setEditingId(null)
+      setEditText('')
+    }
+  }
+
+  // ── Delete handler ──
+  async function deleteMessage(msgId: string) {
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .delete()
+        .eq('id', msgId)
+        .eq('sender_id', userId)
+      if (error) throw error
+      setMessages(prev => prev.filter(m => m.id !== msgId))
+    } catch (err) {
+      setError(c.errors.sendFailed)
+      console.error(err)
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   async function uploadFile(file: File) {
     if (!room) return
     if (file.size > 50 * 1024 * 1024) { setError(c.errors.fileTooLarge); return }
 
-    // Check file limit per room (max 20)
     const { count } = await supabase
       .from('messages')
       .select('*', { count: 'exact', head: true })
@@ -327,13 +387,11 @@ export function Room() {
     if (!room) return
     setDeletingRoom(true)
     try {
-      // Delete files from storage
       const { data: files } = await supabase.storage.from('room-files').list(room.id)
       if (files && files.length > 0) {
         const paths = files.map(f => `${room.id}/${f.name}`)
         await supabase.storage.from('room-files').remove(paths)
       }
-      // Delete room (messages cascade)
       await supabase.from('rooms').delete().eq('id', room.id)
       navigate('/')
     } catch (err) {
@@ -365,6 +423,10 @@ export function Room() {
   }, [])
 
   return (
+    <div className={styles['room-layout']}>
+    <aside className={styles['ad-sidebar']}>
+      <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNGE3eGprODFiY3pia2ZvOTAycG9qMjE3a2JsdDgydWU4NTYxczBlaCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/jPXB66UWvUiqHNwPlD/giphy.gif" alt="" />
+    </aside>
     <div
       className={`${styles.room} ${isDragging ? styles.dragging : ''}`}
       onDragOver={handleDragOver}
@@ -455,19 +517,71 @@ export function Room() {
                           <span className={styles['msg-time-inline']}>{formatTime(msg.created_at)}</span>
                         </div>
                       </a>
+                    ) : editingId === msg.id ? (
+                      /* ── Mode Edit ── */
+                      <div className={styles['edit-wrap']}>
+                        <textarea
+                          className={styles['edit-textarea']}
+                          value={editText}
+                          onChange={e => setEditText(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveEdit(msg.id) }
+                            if (e.key === 'Escape') { setEditingId(null) }
+                          }}
+                          autoFocus
+                        />
+                        <div className={styles['edit-actions']}>
+                          <button className={styles['edit-cancel-btn']} onClick={() => setEditingId(null)}>Batal</button>
+                          <button className={styles['edit-save-btn']} onClick={() => saveEdit(msg.id)}>Simpan</button>
+                        </div>
+                      </div>
                     ) : (
+                      /* ── Bubble Normal ── */
                       <div className={`${styles['msg-bubble-wrap']} ${isSelf ? styles.self : styles.other}`}>
                         <div className={`${styles['msg-bubble']} ${styles['text-bubble']} ${isSelf ? styles.self : styles.other}`}>
                           {renderMessageContent(msg.content)}
+                          {(msg as any).edited_at && (
+                            <span className={styles['edited-label']}>diedit</span>
+                          )}
                           <span className={styles['msg-time-inline']}>{formatTime(msg.created_at)}</span>
                         </div>
-                        <button
-                          className={styles['copy-btn']}
-                          onClick={() => copyMessage(msg.id, msg.content)}
-                          title={c.copyBtn}
-                        >
-                          {copiedId === msg.id ? c.copiedBtn : c.copyBtn}
-                        </button>
+
+                        {/* Tombol aksi — hanya untuk pesan sendiri */}
+                        {isSelf ? (
+                          <div className={styles['msg-actions']}>
+                            <button
+                              className={styles['copy-btn']}
+                              onClick={() => copyMessage(msg.id, msg.content)}
+                              title={c.copyBtn}
+                            >
+                              {copiedId === msg.id ? c.copiedBtn : c.copyBtn}
+                            </button>
+                            <button
+                              className={styles['action-edit-btn']}
+                              onClick={() => startEdit(msg)}
+                            >
+                              Edit
+                            </button>
+                            {deletingId === msg.id ? (
+                              <>
+                                <span className={styles['delete-confirm-label']}>Hapus?</span>
+                                <button className={styles['action-delete-confirm-btn']} onClick={() => deleteMessage(msg.id)}>Ya</button>
+                                <button className={styles['action-cancel-btn']} onClick={() => setDeletingId(null)}>Tidak</button>
+                              </>
+                            ) : (
+                              <button className={styles['action-delete-btn']} onClick={() => setDeletingId(msg.id)}>Hapus</button>
+                            )}
+                          </div>
+                        ) : (
+                          /* Tombol salin saja untuk pesan orang lain */
+                          <button
+                            className={styles['copy-btn']}
+                            onClick={() => copyMessage(msg.id, msg.content)}
+                            title={c.copyBtn}
+                          >
+                            {copiedId === msg.id ? c.copiedBtn : c.copyBtn}
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -577,6 +691,10 @@ export function Room() {
           </div>
         </div>
       )}
+    </div>
+    <aside className={styles['ad-sidebar']}>
+      <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdnh4eGlrMXphZGRhcDhoNXVxMTdyeGpuYjZ6cmhodHZ2dWJ3eThhZSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/Fr5LA2RCQbnVp74CxH/giphy.gif" alt="" />
+    </aside>
     </div>
   )
 }
