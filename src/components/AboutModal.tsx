@@ -25,8 +25,8 @@ export function AboutModal({ onClose }: Props) {
           <div className={styles['about-section']}>
             <p className={styles['about-label']}>dibuat oleh</p>
             <p className={styles['about-value']}>
-              <a href="https://github.com/alfahrelrifananda" target="_blank" rel="noopener noreferrer" className={styles['about-link']}>
-                @alfahrelrifananda
+              <a href="https://github.com/alfahrel" target="_blank" rel="noopener noreferrer" className={styles['about-link']}>
+                @alfahrel
               </a>
             </p>
           </div>
@@ -34,8 +34,8 @@ export function AboutModal({ onClose }: Props) {
           <div className={styles['about-section']}>
             <p className={styles['about-label']}>kode sumber</p>
             <p className={styles['about-value']}>
-              <a href="https://github.com/alfahrelrifananda/hashtagaja" target="_blank" rel="noopener noreferrer" className={styles['about-link']}>
-                github.com/alfahrelrifananda/hashtagaja
+              <a href="https://github.com/alfahrel/hashtagaja" target="_blank" rel="noopener noreferrer" className={styles['about-link']}>
+                github.com/alfahrel/hashtagaja
               </a>
             </p>
           </div>
