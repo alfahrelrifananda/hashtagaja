@@ -451,7 +451,7 @@ export function Room() {
   return (
     <div className={styles['room-layout']}>
     <aside className={styles['ad-sidebar']}>
-      <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNGE3eGprODFiY3pia2ZvOTAycG9qMjE3a2JsdDgydWU4NTYxczBlaCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/jPXB66UWvUiqHNwPlD/giphy.gif" alt="" />
+      <img src="" alt="" />
     </aside>
     <div
       className={`${styles.room} ${isDragging ? styles.dragging : ''}`}
@@ -735,7 +735,7 @@ export function Room() {
       )}
     </div>
     <aside className={styles['ad-sidebar']}>
-      <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdnh4eGlrMXphZGRhcDhoNXVxMTdyeGpuYjZ6cmhodHZ2dWJ3eThhZSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/Fr5LA2RCQbnVp74CxH/giphy.gif" alt="" />
+      <img src="" alt="" />
     </aside>
     </div>
   )
